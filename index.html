@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Item Checkout form</title>
+  <title>Item Checkout Form</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
@@ -49,32 +49,30 @@
     <input type="text" id="location" placeholder="Location" />
     <input type="email" id="email" placeholder="Email" />
     <input type="text" id="phone" placeholder="Phone" />
-    <select id="Item Type">
-      <option value="false">Insignia</option>
-      <option value="true">Uniform</option>
-<option value="true">Equipment</option>
+    <select id="itemType" required>
+      <option value="">-- Select Type --</option>
+      <option value="Uniform">Uniform</option>
+      <option value="Insignia">Insignia</option>
+      <option value="Equipment">Equipment</option>
     </select>
     <button type="submit">Submit Request</button>
   </form>
 
   <script type="module">
-    // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
     import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDCo2OweTTS-g60MVwL9N-VUCyCyctZavc",
       authDomain: "squadron-72.firebaseapp.com",
       projectId: "squadron-72",
-      storageBucket: "squadron-72.firebasestorage.app",
+      storageBucket: "squadron-72.appspot.com",
       messagingSenderId: "572966132981",
       appId: "1:572966132981:web:44053bbe8c60378647f9bc",
       measurementId: "G-0D77CRVR83"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const db = getDatabase(app);
@@ -88,7 +86,7 @@
         location: document.getElementById("location").value.trim(),
         email: document.getElementById("email").value.trim(),
         phone: document.getElementById("phone").value.trim(),
-        expendable: document.getElementById("expendable").value === "true",
+        itemType: document.getElementById("itemType").value,
         received: 0,
         verified: false,
         returned: false
