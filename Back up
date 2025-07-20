@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Item Checkout form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 2rem;
+    }
+    form {
+      background: #222;
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+    }
+    input, select, button {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .logo img {
+      max-width: 200px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <img src="ChatGPT Image Jul 17, 2025, 10_20_07 AM.png" alt="AESA Logo" />
+  </div>
+  <h1>Request Inventory Item</h1>
+  <form onsubmit="submitRequest(event)">
+    <input type="text" id="itemName" placeholder="Item Name" required />
+    <input type="number" id="requested" placeholder="Requested Qty" required />
+    <input type="text" id="custodian" placeholder="Your Name" />
+    <input type="text" id="location" placeholder="Location" />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="text" id="phone" placeholder="Phone" />
+    <select id="Item Type">
+      <option value="false">Insignia</option>
+      <option value="true">Uniform</option>
+<option value="true">Equipment</option>
+    </select>
+    <button type="submit">Submit Request</button>
+  </form>
+
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDCo2OweTTS-g60MVwL9N-VUCyCyctZavc",
+      authDomain: "squadron-72.firebaseapp.com",
+      projectId: "squadron-72",
+      storageBucket: "squadron-72.firebasestorage.app",
+      messagingSenderId: "572966132981",
+      appId: "1:572966132981:web:44053bbe8c60378647f9bc",
+      measurementId: "G-0D77CRVR83"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    window.submitRequest = async function (e) {
+      e.preventDefault();
+      const item = {
+        itemName: document.getElementById("itemName").value.trim(),
+        requested: parseInt(document.getElementById("requested").value),
+        custodian: document.getElementById("custodian").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        expendable: document.getElementById("expendable").value === "true",
+        received: 0,
+        verified: false,
+        returned: false
+      };
+
+      if (!item.itemName || isNaN(item.requested)) {
+        return alert("Item name and quantity are required.");
+      }
+
+      const newRef = push(ref(db, "requests"));
+      await set(newRef, item);
+      alert("Request submitted!");
+      e.target.reset();
+    };
+  </script>
+</body>
+</html>
