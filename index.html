@@ -2,105 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Item Checkout Form</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Item (Realtime DB)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: sans-serif;
-      background: #111;
-      color: #eee;
-      padding: 2rem;
-    }
-    form {
-      background: #222;
-      padding: 1rem;
-      border-radius: 10px;
-      max-width: 500px;
-      margin: auto;
-    }
-    input, select, button {
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
-    h1 {
-      text-align: center;
-    }
-    .logo {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .logo img {
-      max-width: 200px;
-      height: auto;
-    }
+    body { font-family: sans-serif; background: #f4f4f4; color: #111; padding: 1rem; }
+    form { background: #fff; padding: 1rem; border-radius: 8px; max-width: 400px; }
+    label, input, select, button { display: block; margin: 10px 0; width: 100%; }
+    #itemSelect { height: 140px; }
   </style>
 </head>
 <body>
-  <div class="logo">
-    <img src="ChatGPT Image Jul 17, 2025, 10_20_07 AM.png" alt="AESA Logo" />
-  </div>
   <h1>Request Inventory Item</h1>
-  <form onsubmit="submitRequest(event)">
-    <input type="text" id="itemName" placeholder="Item Name" required />
-    <input type="number" id="requested" placeholder="Requested Qty" required />
-    <input type="text" id="custodian" placeholder="Your Name" />
-    <input type="text" id="location" placeholder="Location" />
-    <input type="email" id="email" placeholder="Email" />
-    <input type="text" id="phone" placeholder="Phone" />
-    <select id="itemType" required>
-      <option value="">-- Select Type --</option>
-      <option value="Uniform">Uniform</option>
-      <option value="Insignia">Insignia</option>
-      <option value="Equipment">Equipment</option>
+  <form id="requestForm">
+    <input type="text" id="requestName" placeholder="Your Name" required />
+    <input type="email" id="requestEmail" placeholder="Your Email" required />
+
+    <input type="text" id="searchInput" placeholder="Search items..." autocomplete="off" />
+    <select id="itemSelect" size="6" required>
+      <option value="" disabled selected>Select an item</option>
     </select>
+
+    <input type="text" id="reason" placeholder="Purpose of Request" required />
     <button type="submit">Submit Request</button>
   </form>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getDatabase, ref, onValue, update
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyDCo2OweTTS-g60MVwL9N-VUCyCyctZavc",
-      authDomain: "squadron-72.firebaseapp.com",
-      projectId: "squadron-72",
-      storageBucket: "squadron-72.appspot.com",
-      messagingSenderId: "572966132981",
-      appId: "1:572966132981:web:44053bbe8c60378647f9bc",
-      measurementId: "G-0D77CRVR83"
+      apiKey: "AIzaSyAkCL8ii2X3pxyi7NL7URleGNwcwgc1Ilg",
+      authDomain: "squadron-72-72e61.firebaseapp.com",
+      databaseURL: "https://squadron-72-72e61-default-rtdb.firebaseio.com/",
+      projectId: "squadron-72-72e61",
+      storageBucket: "squadron-72-72e61.firebasestorage.app",
+      messagingSenderId: "763275071109",
+      appId: "1:763275071109:web:57b0d9a1eb810e281f63ec",
+      measurementId: "G-265SH9T30V"
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getDatabase(app);
 
-    window.submitRequest = async function (e) {
-      e.preventDefault();
-      const item = {
-        itemName: document.getElementById("itemName").value.trim(),
-        requested: parseInt(document.getElementById("requested").value),
-        custodian: document.getElementById("custodian").value.trim(),
-        location: document.getElementById("location").value.trim(),
-        email: document.getElementById("email").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        itemType: document.getElementById("itemType").value,
-        received: 0,
-        verified: false,
-        returned: false
-      };
+    const itemSelect = document.getElementById("itemSelect");
+    const requestForm = document.getElementById("requestForm");
+    const searchInput = document.getElementById("searchInput");
 
-      if (!item.itemName || isNaN(item.requested)) {
-        return alert("Item name and quantity are required.");
+    let availableItems = [];
+
+    function renderItems(filter = "") {
+      itemSelect.innerHTML = "";
+      const filtered = availableItems.filter(item => {
+        const search = filter.toLowerCase();
+        return (
+          item.name.toLowerCase().includes(search) ||
+          item.type.toLowerCase().includes(search) ||
+          item.id.toLowerCase().includes(search)
+        );
+      });
+
+      if (filtered.length === 0) {
+        const option = document.createElement("option");
+        option.textContent = "No items found";
+        option.disabled = true;
+        itemSelect.appendChild(option);
+        return;
       }
 
-      const newRef = push(ref(db, "requests"));
-      await set(newRef, item);
-      alert("Request submitted!");
-      e.target.reset();
-    };
+      if (filter === "") {
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        defaultOption.textContent = "Select an item";
+        itemSelect.appendChild(defaultOption);
+      }
+
+      filtered.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item.key;
+        option.textContent = `${item.name} (${item.type}) - ID: ${item.id}`;
+        itemSelect.appendChild(option);
+      });
+    }
+
+    const inventoryRef = ref(db, "inventory");
+
+    onValue(inventoryRef, snapshot => {
+      availableItems = [];
+      const data = snapshot.val();
+      if (!data) {
+        renderItems();
+        return;
+      }
+      Object.entries(data).forEach(([key, item]) => {
+        if (item.status && item.status.toLowerCase() === "in inventory") {
+          availableItems.push({
+            key,
+            name: item.name,
+            type: item.type,
+            id: item.id
+          });
+        }
+      });
+      renderItems(searchInput.value);
+    });
+
+    searchInput.addEventListener("input", e => {
+      renderItems(e.target.value);
+    });
+
+    requestForm.addEventListener("submit", e => {
+      e.preventDefault();
+
+      const key = itemSelect.value;
+      if (!key) return alert("Please select an item.");
+
+      const name = document.getElementById("requestName").value.trim();
+      const email = document.getElementById("requestEmail").value.trim();
+      const reason = document.getElementById("reason").value.trim();
+
+      if (!name || !email || !reason) return alert("Please fill out all fields.");
+
+      update(ref(db, `inventory/${key}`), {
+        status: "assigned",
+        assignedTo: `${name} (${email}) - ${reason}`
+      }).then(() => {
+        alert("Request submitted!");
+        requestForm.reset();
+        renderItems();
+      }).catch(err => alert("Error submitting request: " + err.message));
+    });
   </script>
 </body>
 </html>
